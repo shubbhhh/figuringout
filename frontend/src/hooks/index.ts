@@ -37,7 +37,6 @@ export const useBlogs = () => {
 
     setData((prev) => {
       const dataExists = prev.find((item) => item.page === page);
-      console.log("dataExists", dataExists)
       if (dataExists) {
         const updatedPayload = prev.map((item) => {
           if (item.page === page) {
@@ -46,10 +45,8 @@ export const useBlogs = () => {
             return item;
           }
         });
-        console.log("updatedPayload", updatedPayload)
         return updatedPayload;
       } else {
-        console.log("extendedPayload", [...prev, response?.data || {}])
         return [...prev, response?.data || {}];
       }
     });

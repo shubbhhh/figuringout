@@ -108,7 +108,6 @@ function EditBox({ comment, commentId ,setEditComment, editCommentHandler }: Edi
             buttonRef.current = true
         } 
         setPostButton(buttonRef.current)
-        console.log(userComment);
     }, [userComment]);
 
     return (<div>
