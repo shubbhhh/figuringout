@@ -88,6 +88,8 @@ commentRouter.post("/", async (c) => {
       },
       include: {
         user: { select: { id: true, name: true, profilePic: true } },
+        children: true,
+        claps: true
       },
     });
     if(comment.message.length === 0 ){
@@ -120,6 +122,15 @@ commentRouter.put("/:id", async (c) => {
     const updatedComment = await prisma.comment.update({
       where: { id: commentId },
       data: { message: body.message },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            profilePic: true
+          }
+        }
+      }
     });
 
     return c.json(updatedComment);

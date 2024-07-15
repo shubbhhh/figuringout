@@ -5,8 +5,11 @@ import { useNavigate } from 'react-router-dom';
 import { BlogResponse } from '../types/blog';
 import { Post } from '../types/post';
 import { useSearchParams } from 'react-router-dom';
+import { Comment } from '@/types/comment';
+import { toast } from 'react-toastify';
 
 const PAGE_SIZE = 10;
+const COMMENT_PAGE_SIZE = 5;
 
 export const useBlogs = () => {
   const [loading, setLoading] = useState(false);
@@ -34,6 +37,7 @@ export const useBlogs = () => {
 
     setData((prev) => {
       const dataExists = prev.find((item) => item.page === page);
+      console.log("dataExists", dataExists)
       if (dataExists) {
         const updatedPayload = prev.map((item) => {
           if (item.page === page) {
@@ -42,8 +46,10 @@ export const useBlogs = () => {
             return item;
           }
         });
+        console.log("updatedPayload", updatedPayload)
         return updatedPayload;
       } else {
+        console.log("extendedPayload", [...prev, response?.data || {}])
         return [...prev, response?.data || {}];
       }
     });
@@ -256,5 +262,150 @@ export const useBookmarks = () => {
   return {
     loading,
     bookmarks,
+  };
+};
+
+export const useComments = ({ postId }: { postId: string }) => {
+  const [allComments, setAllComments] = useState<Comment[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const navigate = useNavigate();
+
+  async function fetchComments() {
+    setLoading(true);
+    try {
+      const response = await axios.get(`${BACKEND_URL}/api/v1/comments/post/${postId}?page=${page}&pageSize=${COMMENT_PAGE_SIZE}`);
+      if (page === 1) {
+        setAllComments(response.data.comments);
+      } else {
+        setAllComments(prevComments => [...prevComments, ...response.data.comments]);
+      }
+      setTotalPages(response.data.totalPages);
+    } catch (error) {
+      console.error("Failed to fetch comments", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchComments();
+  }, [page, postId]);
+
+  const handleLoadMoreComments = () => {
+    if (page < totalPages) {
+      setPage(prevPage => prevPage + 1);
+    }
+  };
+
+  const postComment = async (comment: string) => {
+    try {
+      const response = await axios.post(
+        `${BACKEND_URL}/api/v1/comments`,
+        {
+          message: comment,
+          postId: postId,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        }
+      );
+      setAllComments([response.data, ...allComments]);
+      return response.data;
+    } catch (error) {
+      console.error("Failed to post comment", error);
+      toast.error("Failed to post comment.");
+      return { error: "Failed to post comment." };
+    }
+  };
+
+  const deleteComment = async (commentId: string) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      navigate('/signin');
+      return;
+    }
+    try {
+      await axios.delete(`${BACKEND_URL}/api/v1/comments/${commentId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setAllComments(prevComments => prevComments.filter(comment => comment.id !== commentId));
+    } catch (error) {
+      console.error("Failed to delete comment", error);
+      toast.error("Failed to delete comment.");
+    }
+  };
+
+  const editComment = async (commentId: string, updatedComment: string) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      navigate('/signin');
+      return;
+    }
+    try {
+      const response = await axios.put(
+        `${BACKEND_URL}/api/v1/comments/${commentId}`,
+        {
+          message: updatedComment,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          }
+        }
+      );
+      setAllComments(prevComments =>
+        prevComments.map(comment => (comment.id === commentId ? response.data : comment))
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Failed to update comment", error);
+      toast.error("Failed to update comment.");
+    }
+  };
+
+  const likeComment = async (commentId: string) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      navigate('/signin');
+      return;
+    }
+    try {
+      const response = await axios.post(
+        `${BACKEND_URL}/api/v1/comments/${commentId}/clap`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      setAllComments(prevComments =>
+        prevComments.map(comment =>
+          comment.id === commentId ? { ...comment, claps: response.data.claps } : comment
+        )
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Failed to like comment", error);
+      toast.error("Failed to like comment.");
+    }
+  };
+
+  return {
+    loading,
+    allComments,
+    handleLoadMoreComments,
+    postComment,
+    deleteComment,
+    editComment,
+    likeComment,
+    page,
+    totalPages,
   };
 };
