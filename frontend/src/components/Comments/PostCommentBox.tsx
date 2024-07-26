@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import AutogrowTextarea from "./AutogrowTextarea"
-import Avatar from "./Avatar"
+import AutogrowTextarea from "../AutogrowTextarea"
+import Avatar from "../Avatar"
 import { toast } from "react-toastify";
 import { useParams } from "react-router-dom";
 import { useComments } from "@/hooks";
@@ -70,7 +70,7 @@ export function PostCommentBox() {
                 ></ReactQuill> */}
                 <div className='w-full flex justify-end px-2'>
                   {postButton ?  (
-                    <div className='flex gap-2 w-1/3'>
+                    <div className='flex gap-2 w-full sm:w-1/3'>
                       <button disabled={!postButton}
                               className='w-1/2 border-2 py-1 rounded-full font-semibold border-green-500 text-green-700 hover:bg-green-500 hover:text-white'
                               onClick={handlePostComment}        

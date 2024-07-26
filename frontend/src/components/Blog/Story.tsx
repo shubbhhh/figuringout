@@ -63,8 +63,8 @@ const Story = () => {
         <div className="py-4 text-sub">
           <ReactQuill value={blog?.content} readOnly={true} theme={'bubble'} />
         </div>
-        <Comments />
         <ChatModule key={chatKey} />
+        <Comments />
         <RecommendedBlogs authorName={blog?.author?.name} />
       </div>
       <Tags />

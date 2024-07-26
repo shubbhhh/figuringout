@@ -261,6 +261,7 @@ export const useBookmarks = () => {
     bookmarks,
   };
 };
+
 export const useRecommendedBlogs = ({ blogId }: { blogId: string }) => {
   const [recommendedBlogs, setRecommendedBlogs] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
@@ -319,19 +320,27 @@ export const useComments = ({ postId }: { postId: string }) => {
     fetchComments();
   }, [page, postId]);
 
+  // Temporary only for dev purpose
+  const refresh = async () => {
+    // setAllComments([]);
+    setPage(1);
+    await fetchComments();
+  }
+
   const handleLoadMoreComments = () => {
     if (page < totalPages) {
       setPage(prevPage => prevPage + 1);
     }
   };
 
-  const postComment = async (comment: string) => {
+  const postComment = async (comment: string, parentId?: string) => {
     try {
       const response = await axios.post(
         `${BACKEND_URL}/api/v1/comments`,
         {
           message: comment,
           postId: postId,
+          parentId: parentId || null
         },
         {
           headers: {
@@ -339,7 +348,13 @@ export const useComments = ({ postId }: { postId: string }) => {
           },
         }
       );
+
+      // Bug: These Statement are not updating the allComment state
+      console.log(allComments)
       setAllComments([response.data, ...allComments]);
+      console.log(allComments)
+      // setAllComments(prevComments => [...prevComments, ...response.data.comments]
+
       return response.data;
     } catch (error) {
       console.error("Failed to post comment", error);
@@ -411,6 +426,8 @@ export const useComments = ({ postId }: { postId: string }) => {
           },
         }
       );
+
+      // Bug: This statement is not updating the allComment state
       setAllComments(prevComments =>
         prevComments.map(comment =>
           comment.id === commentId ? { ...comment, claps: response.data.claps } : comment
@@ -431,6 +448,7 @@ export const useComments = ({ postId }: { postId: string }) => {
     deleteComment,
     editComment,
     likeComment,
+    refresh,
     page,
     totalPages,
   };

@@ -1,14 +1,15 @@
 import { useComments } from "@/hooks";
 import { useParams } from "react-router-dom";
 import { SingleComment } from "./SingleComment";
-// import { useEffect } from "react"; 
+import Spinner from "../Spinner";
 
 export function CommentList() {
     const { id } = useParams();
-    const { loading, allComments, page, totalPages, deleteComment, editComment, likeComment, handleLoadMoreComments } = useComments({ postId: id || '' });
+    const { loading, allComments, page, totalPages, postComment, deleteComment, editComment, likeComment, handleLoadMoreComments, refresh } = useComments({ postId: id || '' });
 
     return (
     <div className="flex flex-col items-center w-full">
+      <button onClick={refresh}>Refresh</button>
       <div className='flex flex-col gap-2 w-full justify-center p-2 border-x'>
           {allComments.length ? (
             <>
@@ -16,15 +17,16 @@ export function CommentList() {
                 <SingleComment
                     key={comment.id}
                     index={index} 
-                    comment={comment} 
+                    comment={comment}
+                    postComment={postComment}
                     deleteComment={deleteComment}
                     editComment={editComment}
                     likeComment={likeComment}
                 />
               )}
               {loading? (
-                <div className="w-full items-center">
-                    Loading...
+                <div className="flex justify-center w-full items-center">
+                    <Spinner />
                 </div>
             ) : ( 
               <>
